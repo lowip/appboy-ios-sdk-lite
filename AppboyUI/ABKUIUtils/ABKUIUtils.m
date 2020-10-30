@@ -1,13 +1,27 @@
 #import "ABKUIUtils.h"
 #import "ABKSDWebImageProxy.h"
 
+#define ABKUISPMBundlePath @"/Appboy_iOS_SDK_AppboyUI.bundle/"
+
 static NSString *const LocalizedAppboyStringNotFound = @"not found";
-static NSUInteger const iPhoneXHeight = 2436.0;
+static NSUInteger const iPhoneXHeight = 2436.0; // iPhone 12 mini is also this size
 static NSUInteger const iPhoneXRHeight = 1792.0;
 static NSUInteger const iPhoneXSMaxHeight = 2688.0;
 static NSUInteger const iPhoneXRScaledHeight = 1624.0;
+static NSUInteger const iPhone12 = 2532.0; // iPhone 12 pro is also this size
+static NSUInteger const iPhone12ProMax = 2778.0;
 
 @implementation ABKUIUtils
+
+#pragma mark - Bundle Helper
+
++ (NSBundle *)bundle:(Class)bundleClass {
+  NSString *spmBundleAt = [[[NSBundle mainBundle] bundlePath] stringByAppendingString:ABKUISPMBundlePath];
+  if ([[NSFileManager defaultManager] fileExistsAtPath:spmBundleAt]) {
+    return [NSBundle bundleWithPath:spmBundleAt];
+  }
+  return  [NSBundle bundleForClass:bundleClass];
+}
 
 #pragma mark - View Hierarchy Helpers
 
@@ -170,7 +184,9 @@ static NSUInteger const iPhoneXRScaledHeight = 1624.0;
   return ([[UIScreen mainScreen] nativeBounds].size.height == iPhoneXHeight ||
           [[UIScreen mainScreen] nativeBounds].size.height == iPhoneXRHeight ||
           [[UIScreen mainScreen] nativeBounds].size.height == iPhoneXSMaxHeight ||
-          [[UIScreen mainScreen] nativeBounds].size.height == iPhoneXRScaledHeight);
+          [[UIScreen mainScreen] nativeBounds].size.height == iPhoneXRScaledHeight ||
+          [[UIScreen mainScreen] nativeBounds].size.height == iPhone12 ||
+          [[UIScreen mainScreen] nativeBounds].size.height == iPhone12ProMax);
 }
 
 + (UIImage *)getImageWithName:(NSString *)name
