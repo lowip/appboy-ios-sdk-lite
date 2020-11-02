@@ -28,7 +28,8 @@ let package = Package(
       path: "AppboyKit",
       resources: [
         .process("Appboy.bundle"),
-        .process("headers/AppboyKitLibrary/ZipArchive_LICENSE.txt")
+        .process("headers/AppboyKitLibrary/ZipArchive_LICENSE.txt"),
+        .copy("cleanup.sh")
       ],
       publicHeadersPath: "headers/AppboyKitLibrary",
       linkerSettings: [
