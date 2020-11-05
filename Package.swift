@@ -19,8 +19,7 @@ let package = Package(
   targets: [
     .binaryTarget(
       name: "AppboyKitLibrary",
-      url: "https://github.com/Appboy/appboy-ios-sdk/releases/download/3.29.1/AppboyKitLibrary.xcframework.zip",
-      checksum: "92d644be71dd5c51373e3a9d4f0c493bdf2f55af4c3444ff8142fae30447a72b"
+      path: "AppboyKit/AppboyKitLibrary.xcframework"
     ),
     .target(
       name: "AppboyKit",
