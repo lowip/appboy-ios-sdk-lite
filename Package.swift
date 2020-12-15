@@ -25,12 +25,11 @@ let package = Package(
       name: "AppboyKit",
       dependencies: ["SDWebImage", "AppboyKitLibrary"],
       path: "AppboyKit",
-      exclude: ["AppboyKitLibrary.xcframework"],
       resources: [
         .process("Appboy.bundle"),
-//        .process("headers/AppboyKitLibrary/ZipArchive_LICENSE.txt")
+        .process("headers/AppboyKitLibrary/ZipArchive_LICENSE.txt")
       ],
-//      publicHeadersPath: "headers/AppboyKitLibrary",
+      publicHeadersPath: "headers/AppboyKitLibrary",
       linkerSettings: [
         .linkedFramework("SystemConfiguration"),
         .linkedFramework("QuartzCore"),
