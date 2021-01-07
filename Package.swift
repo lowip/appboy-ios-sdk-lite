@@ -62,6 +62,7 @@ let package = Package(
       name: "AppboyPushStory",
       dependencies: ["AppboyPushStoryFramework"],
       path: "AppboyPushStory",
+      exclude: ["AppboyPushStory.xcframework"],
       resources: [
         .process("Resources/AVKPageView.nib")
       ]
