@@ -11,7 +11,6 @@
 #import "ABKUIUtils.h"
 #import "ABKUIURLUtils.h"
 #import <SDWebImage/SDWebImagePrefetcher.h>
-#import <SDWebImage/UIImageView+WebCache.h>
 
 static double const ABKContentCardsCacheTimeout = 1 * 60; // 1 minute
 static CGFloat const ABKContentCardsCellEstimatedHeight = 400.0f;
@@ -51,7 +50,7 @@ static CGFloat const ABKContentCardsCellEstimatedHeight = 400.0f;
 
 - (instancetype)init {
   UIStoryboard *st = [UIStoryboard storyboardWithName:@"ABKContentCardsStoryboard"
-                                               bundle:[ABKUIUtils bundle:[ABKContentCardsTableViewController class]]];
+                                               bundle:[ABKUIUtils bundle:[ABKContentCardsTableViewController class] channel:ABKContentCardChannel]];
   ABKContentCardsTableViewController *vc = [st instantiateViewControllerWithIdentifier:@"ABKContentCardsTableViewController"];
   self = vc;
   return self;
@@ -409,14 +408,14 @@ estimatedHeightForRowAtIndexPath:(nonnull NSIndexPath *)indexPath {
 
 + (instancetype)getNavigationContentCardsViewController {
   UIStoryboard *st = [UIStoryboard storyboardWithName:@"ABKContentCardsStoryboard"
-                                               bundle:[ABKUIUtils bundle:[ABKContentCardsTableViewController class]]];
+                                               bundle:[ABKUIUtils bundle:[ABKContentCardsTableViewController class] channel:ABKContentCardChannel]];
   ABKContentCardsTableViewController *vc = [st instantiateViewControllerWithIdentifier:@"ABKContentCardsTableViewController"];
   return vc;
 }
 
 - (NSString *)localizedAppboyContentCardsString:(NSString *)key {
   return [ABKUIUtils getLocalizedString:key
-                         inAppboyBundle:[ABKUIUtils bundle:[ABKContentCardsTableViewController class]]
+                         inAppboyBundle:[ABKUIUtils bundle:[ABKContentCardsTableViewController class] channel:ABKContentCardChannel]
                                   table:@"AppboyContentCardsLocalizable"];
 }
 
