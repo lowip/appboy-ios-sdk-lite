@@ -4,6 +4,16 @@
 
 @implementation ABKNFClassicCardCell
 
+- (void)awakeFromNib {
+  [super awakeFromNib];
+
+  // On Mac Catalyst 13, allowsDefaultTighteningForTruncation defaults to YES
+  // - Occurs only if numberOfLine is not 0
+  // - Default value should be NO (see documentation)
+  // - Might be fixed in a later version
+  self.titleLabel.allowsDefaultTighteningForTruncation = NO;
+}
+
 - (void)applyCard:(ABKCard *)card {
   [super applyCard:card];
   if (![card isKindOfClass:[ABKClassicCard class]]) {

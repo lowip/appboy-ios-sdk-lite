@@ -354,6 +354,7 @@ static CGFloat const MinimumInAppMessageDismissVelocity = 20.0;
   [self.slideAwayTimer invalidate];
   self.slideAwayTimer = nil;
 
+  self.inAppMessageWindow.rootViewController = nil;
   self.inAppMessageWindow = nil;
   [[NSNotificationCenter defaultCenter] postNotificationName:ABKNotificationInAppMessageWindowDismissed
                                                       object:self
