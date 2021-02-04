@@ -55,17 +55,8 @@ let package = Package(
       publicHeadersPath: "include/AppboyUI"
     ),
     .binaryTarget(
-      name: "AppboyPushStoryFramework",
-      path: "AppboyPushStory/AppboyPushStory.xcframework"
-    ),
-    .target(
       name: "AppboyPushStory",
-      dependencies: ["AppboyPushStoryFramework"],
-      path: "AppboyPushStory",
-      exclude: ["AppboyPushStory.xcframework"],
-      resources: [
-        .process("Resources/AVKPageView.nib")
-      ]
+      path: "AppboyPushStory/AppboyPushStory.xcframework"
     )
   ]
 )

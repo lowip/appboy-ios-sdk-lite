@@ -10,8 +10,6 @@
 
 #import "ABKUIUtils.h"
 #import "ABKUIURLUtils.h"
-#import <SDWebImage/SDWebImagePrefetcher.h>
-#import <SDWebImage/UIImageView+WebCache.h>
 
 static double const ABKContentCardsCacheTimeout = 1 * 60; // 1 minute
 static CGFloat const ABKContentCardsCellEstimatedHeight = 400.0f;
@@ -40,9 +38,6 @@ static CGFloat const ABKContentCardsCellEstimatedHeight = 400.0f;
 
 + (NSString *)findCellIdentifierWithCard:(ABKContentCard *)card;
 
-- (void)cacheAllCardImages;
-- (void)cancelCachingCardImages;
-
 @end
 
 @implementation ABKContentCardsTableViewController
@@ -51,7 +46,7 @@ static CGFloat const ABKContentCardsCellEstimatedHeight = 400.0f;
 
 - (instancetype)init {
   UIStoryboard *st = [UIStoryboard storyboardWithName:@"ABKContentCardsStoryboard"
-                                               bundle:[ABKUIUtils bundle:[ABKContentCardsTableViewController class]]];
+                                               bundle:[ABKUIUtils bundle:[ABKContentCardsTableViewController class] channel:ABKContentCardChannel]];
   ABKContentCardsTableViewController *vc = [st instantiateViewControllerWithIdentifier:@"ABKContentCardsTableViewController"];
   self = vc;
   return self;
@@ -71,7 +66,7 @@ static CGFloat const ABKContentCardsCellEstimatedHeight = 400.0f;
   _unviewedOnScreenCards = [NSMutableSet set];
   _cellHeights = [NSMutableDictionary dictionary];
   _enableDarkTheme = YES;
-  
+
   [[NSNotificationCenter defaultCenter] addObserver:self
                                            selector:@selector(contentCardsUpdated:)
                                                name:ABKContentCardsProcessedNotification
@@ -99,11 +94,10 @@ static CGFloat const ABKContentCardsCellEstimatedHeight = 400.0f;
 
 - (void)viewWillAppear:(BOOL)animated {
   [super viewWillAppear:animated];
-  
+
   [self requestNewCardsIfTimeout];
   [self updateAndDisplayCardsFromCache];
-  [self cacheAllCardImages];
-  
+
   dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.01 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
     [self.tableView reloadData];
   });
@@ -116,8 +110,6 @@ static CGFloat const ABKContentCardsCellEstimatedHeight = 400.0f;
 
 - (void)viewWillDisappear:(BOOL)animated {
   [super viewWillDisappear:animated];
-  
-  [self cancelCachingCardImages];
 }
 
 - (void)viewWillTransitionToSize:(CGSize)size
@@ -145,7 +137,7 @@ static CGFloat const ABKContentCardsCellEstimatedHeight = 400.0f;
     ABKContentCard *card = self.cards[indexPath.row];
     [self.unviewedOnScreenCards removeObject:card.idString];
   }
-  
+
   [self requestContentCardsRefresh];
 }
 
@@ -182,7 +174,7 @@ static CGFloat const ABKContentCardsCellEstimatedHeight = 400.0f;
     // do nothing if we have already logged an impression
     return;
   }
-  
+
   if (![card isControlCard]) {
     if (card.viewed == NO) {
       [self.unviewedOnScreenCards addObject:card.idString];
@@ -268,7 +260,7 @@ estimatedHeightForRowAtIndexPath:(nonnull NSIndexPath *)indexPath {
   BOOL cellIsVisible = [[tableView indexPathsForVisibleRows] containsObject:indexPath];
   if (!cellIsVisible && indexPath.row < self.cards.count) {
     // indexPath.row is out of bounds if the card did end displaying due to its deletion
-    
+
     ABKContentCard *card = self.cards[indexPath.row];
     [self.unviewedOnScreenCards removeObject:card.idString];
   }
@@ -294,7 +286,7 @@ estimatedHeightForRowAtIndexPath:(nonnull NSIndexPath *)indexPath {
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath {
   ABKContentCard *card = self.cards[indexPath.row];
   [self handleCardClick:card];
-  
+
   // Remove card from unviewedOnScreenCards
   [self.unviewedOnScreenCards removeObject:card.idString];
   [tableView reloadRowsAtIndexPaths:@[indexPath] withRowAnimation:UITableViewRowAnimationNone];
@@ -355,23 +347,23 @@ estimatedHeightForRowAtIndexPath:(nonnull NSIndexPath *)indexPath {
   if (card.urlString.length <= 0) {
     return;
   }
-  
+
   [card logContentCardClicked];
   NSURL *cardURL = [ABKUIURLUtils getEncodedURIFromString:card.urlString];
-  
+
   // Delegate handles card click action
   if ([self.delegate respondsToSelector:@selector(contentCardTableViewController:shouldHandleCardClick:)] &&
       ![self.delegate contentCardTableViewController:self shouldHandleCardClick:cardURL]) {
     return;
   }
-  
+
   // Handles card click action
   if ([ABKUIURLUtils URL:cardURL shouldOpenInWebView:card.openUrlInWebView]) {
     [self openURLInWebView:cardURL];
   } else {
     [ABKUIURLUtils openURLWithSystem:cardURL fromChannel:ABKContentCardChannel];
   }
-  
+
   // Delegate inform card click action
   if ([self.delegate respondsToSelector:@selector(contentCardTableViewController:didHandleCardClick:)]) {
     [self.delegate contentCardTableViewController:self didHandleCardClick:cardURL];
@@ -385,38 +377,18 @@ estimatedHeightForRowAtIndexPath:(nonnull NSIndexPath *)indexPath {
   [self.navigationController pushViewController:webVC animated:YES];
 }
 
-#pragma mark - Image Caching
-
-- (void)cacheAllCardImages {
-  NSMutableArray *images = [NSMutableArray arrayWithCapacity:self.cards.count];
-  for (ABKCard *card in self.cards) {
-    if ([card respondsToSelector:@selector(image)]) {
-      NSString *imageUrlString = [[card performSelector:@selector(image)] copy];
-      NSURL *imageUrl = [ABKUIURLUtils getEncodedURIFromString:imageUrlString];
-      if ([ABKUIUtils objectIsValidAndNotEmpty:imageUrl]) {
-        [images addObject:imageUrl];
-      }
-    }
-  }
-  [[SDWebImagePrefetcher sharedImagePrefetcher] prefetchURLs:images];
-}
-
-- (void)cancelCachingCardImages {
-  [[SDWebImagePrefetcher sharedImagePrefetcher] cancelPrefetching];
-}
-
 #pragma mark - Utility Methods
 
 + (instancetype)getNavigationContentCardsViewController {
   UIStoryboard *st = [UIStoryboard storyboardWithName:@"ABKContentCardsStoryboard"
-                                               bundle:[ABKUIUtils bundle:[ABKContentCardsTableViewController class]]];
+                                               bundle:[ABKUIUtils bundle:[ABKContentCardsTableViewController class] channel:ABKContentCardChannel]];
   ABKContentCardsTableViewController *vc = [st instantiateViewControllerWithIdentifier:@"ABKContentCardsTableViewController"];
   return vc;
 }
 
 - (NSString *)localizedAppboyContentCardsString:(NSString *)key {
   return [ABKUIUtils getLocalizedString:key
-                         inAppboyBundle:[ABKUIUtils bundle:[ABKContentCardsTableViewController class]]
+                         inAppboyBundle:[ABKUIUtils bundle:[ABKContentCardsTableViewController class] channel:ABKContentCardChannel]
                                   table:@"AppboyContentCardsLocalizable"];
 }
 
