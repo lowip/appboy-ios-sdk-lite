@@ -4,6 +4,10 @@
 <dict>
 	<key>files</key>
 	<dict>
+		<key>ABKPageView.nib</key>
+		<data>
+		rk3jhgEnjpTFmaeYFLHj4xDRO60=
+		</data>
 		<key>Headers/ABKStoriesView.h</key>
 		<data>
 		qdYhSN29LukSbF1xUM9hglJB2NQ=
@@ -18,7 +22,7 @@
 		</data>
 		<key>Info.plist</key>
 		<data>
-		4wyGN4O2+0W/d7RK+UfRkB61EU0=
+		q8tgeOEItv0RPy+lx4PiaOv5fsU=
 		</data>
 		<key>Modules/module.modulemap</key>
 		<data>
@@ -27,6 +31,17 @@
 	</dict>
 	<key>files2</key>
 	<dict>
+		<key>ABKPageView.nib</key>
+		<dict>
+			<key>hash</key>
+			<data>
+			rk3jhgEnjpTFmaeYFLHj4xDRO60=
+			</data>
+			<key>hash2</key>
+			<data>
+			wD3cQ8cjzBHEqie+4XUsvqbwFOG66zTfi8qoyXJ+25Y=
+			</data>
+		</dict>
 		<key>Headers/ABKStoriesView.h</key>
 		<dict>
 			<key>hash</key>
