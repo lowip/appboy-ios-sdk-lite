@@ -19,18 +19,18 @@ let package = Package(
   targets: [
     .binaryTarget(
       name: "AppboyKitLibrary",
-      path: "AppboyKit/AppboyKitLibrary.xcframework"
+      url: "https://conscious-selection.surge.sh/AppboyKitLibrary.xcframework.zip",
+      checksum: "1b4be7c77fc014ea44356e810f9e1e4fa72bb0ebb61bf1d7baa25482b7d7a267"
     ),
     .target(
       name: "AppboyKit",
       dependencies: ["SDWebImage", "AppboyKitLibrary"],
       path: "AppboyKit",
-      exclude: ["AppboyKitLibrary.xcframework"],
       resources: [
         .process("Appboy.bundle"),
-//        .process("headers/AppboyKitLibrary/ZipArchive_LICENSE.txt")
+        .process("headers/AppboyKitLibrary/ZipArchive_LICENSE.txt")
       ],
-//      publicHeadersPath: "headers/AppboyKitLibrary",
+      publicHeadersPath: "headers/AppboyKitLibrary",
       linkerSettings: [
         .linkedFramework("SystemConfiguration"),
         .linkedFramework("QuartzCore"),
@@ -56,15 +56,15 @@ let package = Package(
     ),
     .binaryTarget(
       name: "AppboyPushStoryFramework",
-      path: "AppboyPushStory/AppboyPushStory.xcframework"
+      url: "https://conscious-selection.surge.sh/AppboyPushStoryFramework.xcframework.zip",
+      checksum: "9a5129ffaf7caba51a4d3c78c3eaed1f332cd1c629d47c7fdea883971d6dd99f"
     ),
     .target(
       name: "AppboyPushStory",
       dependencies: ["AppboyPushStoryFramework"],
       path: "AppboyPushStory",
-      exclude: ["AppboyPushStory.xcframework"],
       resources: [
-        .process("Resources/AVKPageView.nib")
+        .process("Resources/ABKPageView.nib")
       ]
     )
   ]
