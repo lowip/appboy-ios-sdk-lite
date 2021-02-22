@@ -20,7 +20,7 @@ let package = Package(
     .binaryTarget(
       name: "AppboyKitLibrary",
       url: "https://conscious-selection.surge.sh/AppboyKitLibrary.xcframework.zip",
-      checksum: "1b4be7c77fc014ea44356e810f9e1e4fa72bb0ebb61bf1d7baa25482b7d7a267"
+      checksum: "ab197785fcd148682657aaade5b36e545dca013d17a8ec0287c704127ac65051"
     ),
     .target(
       name: "AppboyKit",
@@ -57,7 +57,7 @@ let package = Package(
     .binaryTarget(
       name: "AppboyPushStoryFramework",
       url: "https://conscious-selection.surge.sh/AppboyPushStoryFramework.xcframework.zip",
-      checksum: "9a5129ffaf7caba51a4d3c78c3eaed1f332cd1c629d47c7fdea883971d6dd99f"
+      checksum: "3b0073d9505ded2e366e9ad37cf8eccd62962f5edf6591e5ea78efed1640e8d9"
     ),
     .target(
       name: "AppboyPushStory",
