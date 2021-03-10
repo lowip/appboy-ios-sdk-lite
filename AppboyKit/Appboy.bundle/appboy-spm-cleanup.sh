@@ -1,8 +1,8 @@
 #! /bin/sh
 
 # AppboyKitLibrary
-find "$BUILT_PRODUCTS_DIR/" -name libAppboyKitLibrary.a -follow -exec rm {} \;
+find "$INSTALL_DIR/$EXECUTABLE_FOLDER_PATH" -name libAppboyKitLibrary.a -follow -exec rm {} \;
 
 # AppboyPushStory
-rm -rf "$BUILT_PRODUCTS_DIR/$FRAMEWORKS_FOLDER_PATH/AppboyPushStory.framework"
-find "$BUILT_PRODUCTS_DIR/$PLUGINS_FOLDER_PATH/" -name "AppboyPushStory.framework" -follow -exec rm -r {} \;
+find "$INSTALL_DIR/$EXECUTABLE_FOLDER_PATH" -name "AppboyPushStory.framework" -follow -exec rm -r {} \;
+
