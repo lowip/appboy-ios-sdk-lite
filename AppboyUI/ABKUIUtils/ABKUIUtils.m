@@ -23,12 +23,13 @@ static NSString * const ABKUIPodNFBundleName = @"AppboyUI.NewsFeed.bundle";
 + (NSBundle *)bundle:(Class)bundleClass channel:(ABKChannel)channel {
   NSBundle *bundle;
   
-  // SPM
-  bundle = [self bundleForName:ABKUISPMBundleName class:bundleClass];
+#if SWIFTPM_MODULE_BUNDLE
+  bundle = SWIFTPM_MODULE_BUNDLE;
   if (bundle != nil) {
     return bundle;
   }
-  
+#endif
+
   // Cocoapods
   switch (channel) {
     case ABKContentCardChannel:
