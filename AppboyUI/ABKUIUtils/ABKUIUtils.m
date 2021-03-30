@@ -23,7 +23,7 @@ static NSString * const ABKUIPodNFBundleName = @"AppboyUI.NewsFeed.bundle";
 + (NSBundle *)bundle:(Class)bundleClass channel:(ABKChannel)channel {
   NSBundle *bundle;
   
-#if SWIFTPM_MODULE_BUNDLE
+#if SWIFT_PACKAGE
   bundle = SWIFTPM_MODULE_BUNDLE;
   if (bundle != nil) {
     return bundle;
