@@ -19,8 +19,7 @@ let package = Package(
   targets: [
     .binaryTarget(
       name: "AppboyKitLibrary",
-      url: "https://conscious-selection.surge.sh/AppboyKitLibrary.xcframework.zip",
-      checksum: "958021ab550256974bec5c7d8174e5953e3a1e986ff6acadf96f17bfe2e1a053"
+      path: "AppboyKit/AppboyKitLibrary.xcframework"
     ),
     .target(
       name: "AppboyKit",

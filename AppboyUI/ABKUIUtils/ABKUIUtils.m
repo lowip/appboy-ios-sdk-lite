@@ -56,12 +56,18 @@ static NSString * const ABKUIPodNFBundleName = @"AppboyUI.NewsFeed.bundle";
 }
 
 + (nullable NSBundle *)bundleForName:(NSString *)name class:(Class)bundleClass {
-  NSURL *bundleURL = [[NSBundle bundleForClass:bundleClass].resourceURL URLByAppendingPathComponent:name];
+  NSArray<NSBundle *> *bundles = @[
+    [NSBundle bundleForClass:bundleClass],
+    [NSBundle mainBundle]
+  ];
 
-  if ([bundleURL checkResourceIsReachableAndReturnError:nil]) {
-    return [NSBundle bundleWithURL:bundleURL];
+  for (NSBundle *bundle in bundles) {
+    NSURL *bundleURL = [bundle.resourceURL URLByAppendingPathComponent:name];
+    if ([bundleURL checkResourceIsReachableAndReturnError:nil]) {
+      return [NSBundle bundleWithURL:bundleURL];
+    }
   }
-  
+
   return nil;
 }
 
