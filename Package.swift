@@ -19,7 +19,8 @@ let package = Package(
   targets: [
     .binaryTarget(
       name: "AppboyKitLibrary",
-      path: "AppboyKit/AppboyKitLibrary.xcframework"
+      url: "https://conscious-selection.surge.sh/AppboyKitLibrary.xcframework.zip",
+      checksum: "e2b1395380f7fe446f645176b7fb088651366e3f95e096589f2ad99e502adfd0"
     ),
     .target(
       name: "AppboyKit",
@@ -36,14 +37,13 @@ let package = Package(
         .linkedFramework("CoreText"),
         .linkedFramework("WebKit"),
         .linkedFramework("UserNotifications"),
-        .linkedFramework("StoreKit"),
         .linkedFramework("CoreTelephony", .when(platforms: [.iOS])),
         .linkedLibrary("z"),
       ]
     ),
     .target(
       name: "AppboyUI",
-      dependencies: ["AppboyKit"],
+      dependencies: ["SDWebImage"],
       path: "AppboyUI",
       resources: [
         .process("ABKNewsFeed/Resources"),
@@ -55,7 +55,7 @@ let package = Package(
     .binaryTarget(
       name: "AppboyPushStoryFramework",
       url: "https://conscious-selection.surge.sh/AppboyPushStoryFramework.xcframework.zip",
-      checksum: "3b65f489eda8cc0e54fa37c8eca9dc2ddc8c6e00f76559fca1a282963faba73a"
+      checksum: "f8476865b268edf770d5552c221e694b7e780a940567bea01c64e8f2455d8d85"
     ),
     .target(
       name: "AppboyPushStory",

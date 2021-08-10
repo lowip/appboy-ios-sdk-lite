@@ -7,14 +7,17 @@ static NSString *const localizedNoConnectionKey = @"Appboy.no-connection.message
 
 @implementation ABKModalWebViewController
 
-- (void)viewDidLoad {
+- (void)viewDidLoad NS_EXTENSION_UNAVAILABLE_IOS("Not supported for iOS extensions.") {
   [super viewDidLoad];
   
   UIViewController *webViewController = [[UIViewController alloc] init];
-  webViewController.edgesForExtendedLayout = UIRectEdgeNone;
-  
   self.webView = [self getWebView];
   webViewController.view = self.webView;
+#if !TARGET_OS_TV
+  if (@available(iOS 15.0, *)) {
+    self.view.backgroundColor = UIColor.systemGroupedBackgroundColor;
+  }
+#endif
 
   [self setupProgressBarWithViewController:webViewController];
   
@@ -120,8 +123,9 @@ static NSString *const localizedNoConnectionKey = @"Appboy.no-connection.message
 
 #pragma mark - WKNavigationDelegate methods
 
-- (void)webView:(WKWebView *)webView decidePolicyForNavigationAction:(WKNavigationAction *)navigationAction
-decisionHandler:(void (^)(WKNavigationActionPolicy))decisionHandler {
+- (void)webView:(WKWebView *)webView
+    decidePolicyForNavigationAction:(WKNavigationAction *)navigationAction
+    decisionHandler:(void (^)(WKNavigationActionPolicy))decisionHandler NS_EXTENSION_UNAVAILABLE_IOS("Not supported for iOS extensions.") {
   NSString *urlString = [[navigationAction.request.mainDocumentURL absoluteString] lowercaseString];
   NSArray *stringComponents = [urlString componentsSeparatedByString:@":"];
   if ([stringComponents[1] hasPrefix:@"//itunes.apple.com"]  ||
@@ -137,13 +141,14 @@ decisionHandler:(void (^)(WKNavigationActionPolicy))decisionHandler {
   decisionHandler(WKNavigationActionPolicyAllow);
 }
 
-- (void)webView:(WKWebView *)webView didFinishNavigation:(WKNavigation *)navigation{
+- (void)webView:(WKWebView *)webView didFinishNavigation:(WKNavigation *)navigation NS_EXTENSION_UNAVAILABLE_IOS("Not supported for iOS extensions.") {
   self.progressBar.alpha = 0.0;
   [UIApplication sharedApplication].networkActivityIndicatorVisible = NO;
 }
 
-- (void)webView:(WKWebView *)webView didFailProvisionalNavigation:(WKNavigation *)navigation
-      withError:(NSError *)error{
+- (void)webView:(WKWebView *)webView
+    didFailProvisionalNavigation:(WKNavigation *)navigation
+      withError:(NSError *)error NS_EXTENSION_UNAVAILABLE_IOS("Not supported for iOS extensions.") {
   self.progressBar.alpha = 0.0;
   [UIApplication sharedApplication].networkActivityIndicatorVisible = NO;
   

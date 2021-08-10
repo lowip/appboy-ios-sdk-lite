@@ -11,7 +11,6 @@ static NSUInteger const iPhone12ProMax = 2778.0;
 static NSUInteger const iPhone12Mini = 2340.0;
 
 // Bundles
-static NSString * const ABKUISPMBundleName = @"Appboy_iOS_SDK_AppboyUI.bundle";
 static NSString * const ABKUIPodCCBundleName = @"AppboyUI.ContentCards.bundle";
 static NSString * const ABKUIPodIAMBundleName = @"AppboyUI.InAppMessage.bundle";
 static NSString * const ABKUIPodNFBundleName = @"AppboyUI.NewsFeed.bundle";
@@ -22,7 +21,8 @@ static NSString * const ABKUIPodNFBundleName = @"AppboyUI.NewsFeed.bundle";
 
 + (NSBundle *)bundle:(Class)bundleClass channel:(ABKChannel)channel {
   NSBundle *bundle;
-  
+
+  // SPM
 #if SWIFT_PACKAGE
   bundle = SWIFTPM_MODULE_BUNDLE;
   if (bundle != nil) {
@@ -57,16 +57,10 @@ static NSString * const ABKUIPodNFBundleName = @"AppboyUI.NewsFeed.bundle";
 }
 
 + (nullable NSBundle *)bundleForName:(NSString *)name class:(Class)bundleClass {
-  NSArray<NSBundle *> *bundles = @[
-    [NSBundle bundleForClass:bundleClass],
-    [NSBundle mainBundle]
-  ];
+  NSURL *bundleURL = [[NSBundle bundleForClass:bundleClass].resourceURL URLByAppendingPathComponent:name];
 
-  for (NSBundle *bundle in bundles) {
-    NSURL *bundleURL = [bundle.resourceURL URLByAppendingPathComponent:name];
-    if ([bundleURL checkResourceIsReachableAndReturnError:nil]) {
-      return [NSBundle bundleWithURL:bundleURL];
-    }
+  if ([bundleURL checkResourceIsReachableAndReturnError:nil]) {
+    return [NSBundle bundleWithURL:bundleURL];
   }
 
   return nil;
@@ -75,7 +69,7 @@ static NSString * const ABKUIPodNFBundleName = @"AppboyUI.NewsFeed.bundle";
 #pragma mark - View Hierarchy Helpers
 
 // Used in unit tests to mock the UIApplication instance used.
-+ (UIApplication *)application {
++ (UIApplication *)application NS_EXTENSION_UNAVAILABLE_IOS("Not supported for iOS extensions.") {
   return UIApplication.sharedApplication;
 }
 
@@ -231,15 +225,12 @@ static NSString * const ABKUIPodNFBundleName = @"AppboyUI.NewsFeed.bundle";
           [[UIScreen mainScreen] nativeBounds].size.height == iPhone12Mini);
 }
 
-+ (UIImage *)getImageWithName:(NSString *)name
-                         type:(NSString *)type
-               inAppboyBundle:(NSBundle *)appboyBundle {
-  NSString *imagePath = [appboyBundle pathForResource:name ofType:type];
-  UIImage *image = [UIImage imageWithContentsOfFile:imagePath];
-  return image;
++ (UIImage *)imageNamed:(NSString *)name bundle:(Class)bundleClass channel:(ABKChannel)channel {
+  NSBundle *bundle = [ABKUIUtils bundle:bundleClass channel:channel];
+  return [UIImage imageNamed:name inBundle:bundle compatibleWithTraitCollection:nil];
 }
 
-+ (UIInterfaceOrientation)getInterfaceOrientation {
++ (UIInterfaceOrientation)getInterfaceOrientation NS_EXTENSION_UNAVAILABLE_IOS("Not supported for iOS extensions.") {
   if (@available(iOS 13.0, *)) {
     UIWindowScene *windowScene = ABKUIUtils.activeWindowScene;
     if (windowScene) {
@@ -249,7 +240,7 @@ static NSString * const ABKUIPodNFBundleName = @"AppboyUI.NewsFeed.bundle";
   return UIApplication.sharedApplication.statusBarOrientation;
 }
 
-+ (CGSize)getStatusBarSize {
++ (CGSize)getStatusBarSize NS_EXTENSION_UNAVAILABLE_IOS("Not supported for iOS extensions.") {
   if (@available(iOS 13.0, *)) {
     UIWindowScene *windowScene = ABKUIUtils.activeWindowScene;
     if (windowScene) {
@@ -346,6 +337,15 @@ static NSString * const ABKUIPodNFBundleName = @"AppboyUI.NewsFeed.bundle";
 
     return [UIFont systemFontOfSize:[textStyleMap[textStyle] doubleValue]
                              weight:weight];
+  }
+}
+
++ (void)enableAdjustsFontForContentSizeCategory:(id)label {
+  if (@available(iOS 10.0, tvOS 10.0, *)) {
+    id<UIContentSizeCategoryAdjusting> adjustableLabel = label;
+    if ([adjustableLabel respondsToSelector:@selector(setAdjustsFontForContentSizeCategory:)]) {
+      adjustableLabel.adjustsFontForContentSizeCategory = YES;
+    }
   }
 }
 
