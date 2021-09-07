@@ -6,18 +6,17 @@
 #import "ABKFeedWebViewController.h"
 #import "ABKUIURLUtils.h"
 
-#import <SDWebImage/SDWebImagePrefetcher.h>
-#import <SDWebImage/UIImageView+WebCache.h>
-
 @implementation ABKNewsFeedTableViewController
 
 #pragma mark - Initialization
 
 - (instancetype)init {
-  UIStoryboard *st = [UIStoryboard storyboardWithName:@"ABKNewsFeedCardStoryboard"
-                                               bundle:[ABKUIUtils bundle:[ABKNewsFeedTableViewController class]]];
-  ABKNewsFeedTableViewController *nf = [st instantiateViewControllerWithIdentifier:@"ABKNewsFeedTableViewController"];
-  self = nf;
+  self = [super init];
+  if (self) {
+    [self setUp];
+    [self setUpUI];
+    [self registerTableViewCellClasses];
+  }
   return self;
 }
 
@@ -29,49 +28,79 @@
   return self;
 }
 
+#pragma mark - SetUp
+
 - (void)setUp {
   _categories = ABKCardCategoryAll;
   _cacheTimeout = 60.0;
   _cardImpressions = [NSMutableSet set];
-  
+
   [[NSNotificationCenter defaultCenter] addObserver:self
                                            selector:@selector(feedUpdated:)
                                                name:ABKFeedUpdatedNotification
                                              object:nil];
 }
 
+- (void)setUpUI {
+#if !TARGET_OS_TV
+   if (@available(iOS 15.0, *)) {
+     self.view.backgroundColor = UIColor.systemGroupedBackgroundColor;
+   }
+#endif
+  self.emptyFeedView = [[UIView alloc] init];
+  self.emptyFeedView.translatesAutoresizingMaskIntoConstraints = NO;
+  [self.view addSubview:self.emptyFeedView];
+  [self.emptyFeedView.centerYAnchor constraintEqualToAnchor:self.view.centerYAnchor].active = YES;
+  [self.emptyFeedView.centerXAnchor constraintEqualToAnchor:self.view.centerXAnchor].active = YES;
+
+  self.emptyFeedLabel = [[UILabel alloc] init];
+  self.emptyFeedLabel.translatesAutoresizingMaskIntoConstraints = NO;
+  self.emptyFeedLabel.text = [self localizedAppboyFeedString:@"Appboy.feed.no-card.text"];
+  [self.emptyFeedView addSubview:self.emptyFeedLabel];
+
+  [self.emptyFeedLabel.topAnchor constraintEqualToAnchor:self.emptyFeedView.topAnchor].active = YES;
+  [self.emptyFeedLabel.bottomAnchor constraintEqualToAnchor:self.emptyFeedView.bottomAnchor].active = YES;
+  [self.emptyFeedLabel.trailingAnchor constraintEqualToAnchor:self.emptyFeedView.trailingAnchor].active = YES;
+  [self.emptyFeedLabel.leadingAnchor constraintEqualToAnchor:self.emptyFeedView.leadingAnchor].active = YES;
+  
+  self.tableView.separatorStyle = UITableViewCellSeparatorStyleNone;
+  self.tableView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
+  self.tableView.backgroundView = nil;
+  if (@available(iOS 13.0, *)) {
+    self.tableView.backgroundColor = [UIColor systemGroupedBackgroundColor];
+  } else {
+    self.tableView.backgroundColor = [UIColor groupTableViewBackgroundColor];
+  }
+
+  UIRefreshControl *refreshControl = [[UIRefreshControl alloc] init];
+  [refreshControl addTarget:self action:@selector(refreshNewsFeed:)
+           forControlEvents:UIControlEventValueChanged];
+  self.refreshControl = refreshControl;
+  self.navigationItem.title = @"News Feed";
+}
+
 # pragma mark - View Controller Life Cycle Methods
 
 - (void)viewDidLoad {
   [super viewDidLoad];
-  
   self.cards = [[Appboy sharedInstance].feedController getCardsInCategories:self.categories];
-  
+
   self.tableView.rowHeight = UITableViewAutomaticDimension;
   self.tableView.estimatedRowHeight = 160;
-  
+
   [self requestNewCardsIfTimeout];
-  [self cacheAllCardImages];
-  
+
   self.emptyFeedLabel.text = [self localizedAppboyFeedString:@"Appboy.feed.no-card.text"];
 }
 
 - (void)viewWillAppear:(BOOL)animated {
   [super viewWillAppear:animated];
   [self updateAndDisplayCardsFromCache];
-  self.constraintWarningValue =
-    [[NSUserDefaults standardUserDefaults] valueForKey:@"_UIConstraintBasedLayoutLogUnsatisfiable"];
-  [[NSUserDefaults standardUserDefaults] setValue:@(NO) forKey:@"_UIConstraintBasedLayoutLogUnsatisfiable"];
 }
 
 - (void)viewDidAppear:(BOOL)animated {
   [super viewDidAppear:animated];
   [[Appboy sharedInstance] logFeedDisplayed];
-}
-
-- (void)viewWillDisappear:(BOOL)animated {
-  [super viewWillDisappear:animated];
-  [[NSUserDefaults standardUserDefaults] setValue:self.constraintWarningValue forKey:@"_UIConstraintBasedLayoutLogUnsatisfiable"];
 }
 
 - (void)viewWillTransitionToSize:(CGSize)size
@@ -172,20 +201,50 @@
     // do nothing if we have already logged an impression
     return;
   }
-  
+
   [card logCardImpression];
   [self.cardImpressions addObject:card.idString];
 }
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
   ABKCard *card = self.cards[indexPath.row];
-  ABKNFBaseCardCell *cell = [ABKNFBaseCardCell dequeueCellFromTableView:tableView
-                                                           forIndexPath:indexPath
-                                                                forCard:card];
+  ABKNFBaseCardCell *cell = [self dequeueCellFromTableView:tableView
+                                              forIndexPath:indexPath
+                                                   forCard:card];
   [cell applyCard:card];
   cell.delegate = self;
   cell.hideUnreadIndicator = self.disableUnreadIndicator;
   return cell;
+}
+
+- (void)registerTableViewCellClasses {
+  [self.tableView registerClass:[ABKNFBannerCardCell class]
+          forCellReuseIdentifier:@"ABKBannerCardCell"];
+  [self.tableView registerClass:[ABKNFCaptionedMessageCardCell class]
+          forCellReuseIdentifier:@"ABKNFCaptionedMessageCardCell"];
+  [self.tableView registerClass:[ABKNFClassicCardCell class]
+          forCellReuseIdentifier:@"ABKNFNewsCardCell"];
+}
+
+- (ABKNFBaseCardCell *)dequeueCellFromTableView:(UITableView *)tableView
+                                   forIndexPath:(NSIndexPath *)indexPath
+                                        forCard:(ABKCard *)card {
+  NSString *cellIdentifier = [self findCellIdentifierWithCard:card];
+  return [tableView dequeueReusableCellWithIdentifier:cellIdentifier
+                                         forIndexPath:indexPath];
+}
+
+- (NSString *)findCellIdentifierWithCard:(ABKCard *)card {
+  if ([card isKindOfClass:[ABKBannerCard class]]) {
+    return @"ABKBannerCardCell";
+  } else if ([card isKindOfClass:[ABKCaptionedImageCard class]]) {
+    return @"ABKNFCaptionedMessageCardCell";
+  } else if ([card isKindOfClass:[ABKClassicCard class]]) {
+    return @"ABKNFNewsCardCell";
+  } else if ([card isKindOfClass:[ABKTextAnnouncementCard class]]) {
+    return @"ABKNFCaptionedMessageCardCell";
+  }
+  return nil;
 }
 
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath {
@@ -197,13 +256,25 @@
 
 - (void)handleCardClick:(ABKCard *)card {
   [card logCardClicked];
-  
+
   NSURL *cardURL = [ABKUIURLUtils getEncodedURIFromString:card.urlString];
-   if ([ABKUIURLUtils URL:cardURL shouldOpenInWebView:card.openUrlInWebView]) {
-     [self openURLInWebView:cardURL];
-   } else {
-     [ABKUIURLUtils openURLWithSystem:cardURL fromChannel:ABKNewsFeedChannel];
-   }
+
+  // URL Delegate
+  if ([ABKUIURLUtils URLDelegate:Appboy.sharedInstance.appboyUrlDelegate
+                      handlesURL:cardURL
+                     fromChannel:ABKNewsFeedChannel
+                      withExtras:nil]) {
+    return;
+  }
+
+  // WebView
+  if ([ABKUIURLUtils URL:cardURL shouldOpenInWebView:card.openUrlInWebView]) {
+    [self openURLInWebView:cardURL];
+    return;
+  }
+
+  // System
+  [ABKUIURLUtils openURLWithSystem:cardURL];
 }
 
 - (void)openURLInWebView:(NSURL *)url {
@@ -213,34 +284,15 @@
   [self.navigationController pushViewController:webViewController animated:YES];
 }
 
-#pragma mark - Image Caching
-
-- (void)cacheAllCardImages {
-  NSMutableArray *images = [NSMutableArray arrayWithCapacity:self.cards.count];
-  for (ABKCard *card in self.cards) {
-    if ([card respondsToSelector:@selector(image)]) {
-      NSString *imageUrlString = [[card performSelector:@selector(image)] copy];
-      NSURL *imageUrl = [ABKUIURLUtils getEncodedURIFromString:imageUrlString];
-      if ([ABKUIUtils objectIsValidAndNotEmpty:imageUrl]) {
-        [images addObject:imageUrl];
-      }
-    }
-  }
-  [[SDWebImagePrefetcher sharedImagePrefetcher] prefetchURLs:images];
-}
-
 # pragma mark - Utility Methods
 
 + (instancetype)getNavigationFeedViewController {
-  UIStoryboard *st = [UIStoryboard storyboardWithName:@"ABKNewsFeedCardStoryboard"
-                                               bundle:[ABKUIUtils bundle:[ABKNewsFeedTableViewController class]]];
-  ABKNewsFeedTableViewController *nf = [st instantiateViewControllerWithIdentifier:@"ABKNewsFeedTableViewController"];
-  return nf;
+  return [[ABKNewsFeedTableViewController alloc] init];
 }
 
 - (NSString *)localizedAppboyFeedString:(NSString *)key {
   return [ABKUIUtils getLocalizedString:key
-                         inAppboyBundle:[ABKUIUtils bundle:[ABKNewsFeedTableViewController class]]
+                         inAppboyBundle:[ABKUIUtils bundle:[ABKNewsFeedTableViewController class] channel:ABKNewsFeedChannel]
                                   table:@"AppboyFeedLocalizable"];
 }
 

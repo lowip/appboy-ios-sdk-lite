@@ -25,12 +25,9 @@ let package = Package(
       name: "AppboyKit",
       dependencies: ["SDWebImage", "AppboyKitLibrary"],
       path: "AppboyKit",
-      exclude: ["AppboyKitLibrary.xcframework"],
       resources: [
-        .process("Appboy.bundle"),
-//        .process("headers/AppboyKitLibrary/ZipArchive_LICENSE.txt")
+        .process("Appboy.bundle")
       ],
-//      publicHeadersPath: "headers/AppboyKitLibrary",
       linkerSettings: [
         .linkedFramework("SystemConfiguration"),
         .linkedFramework("QuartzCore"),
@@ -38,7 +35,6 @@ let package = Package(
         .linkedFramework("CoreText"),
         .linkedFramework("WebKit"),
         .linkedFramework("UserNotifications"),
-        .linkedFramework("StoreKit"),
         .linkedFramework("CoreTelephony", .when(platforms: [.iOS])),
         .linkedLibrary("z"),
       ]
@@ -62,9 +58,8 @@ let package = Package(
       name: "AppboyPushStory",
       dependencies: ["AppboyPushStoryFramework"],
       path: "AppboyPushStory",
-      exclude: ["AppboyPushStory.xcframework"],
       resources: [
-        .process("Resources/AVKPageView.nib")
+        .process("Resources/ABKPageView.nib")
       ]
     )
   ]

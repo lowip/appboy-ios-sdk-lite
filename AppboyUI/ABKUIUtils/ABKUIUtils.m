@@ -1,26 +1,69 @@
 #import "ABKUIUtils.h"
 #import "ABKSDWebImageProxy.h"
 
-#define ABKUISPMBundlePath @"/Appboy_iOS_SDK_AppboyUI.bundle/"
-
 static NSString *const LocalizedAppboyStringNotFound = @"not found";
-static NSUInteger const iPhoneXHeight = 2436.0; // iPhone 12 mini is also this size
+static NSUInteger const iPhoneXHeight = 2436.0; // iPhone 12 mini simulator is also this size
 static NSUInteger const iPhoneXRHeight = 1792.0;
 static NSUInteger const iPhoneXSMaxHeight = 2688.0;
 static NSUInteger const iPhoneXRScaledHeight = 1624.0;
 static NSUInteger const iPhone12 = 2532.0; // iPhone 12 pro is also this size
 static NSUInteger const iPhone12ProMax = 2778.0;
+static NSUInteger const iPhone12Mini = 2340.0;
+
+// Bundles
+static NSString * const ABKUIPodCCBundleName = @"AppboyUI.ContentCards.bundle";
+static NSString * const ABKUIPodIAMBundleName = @"AppboyUI.InAppMessage.bundle";
+static NSString * const ABKUIPodNFBundleName = @"AppboyUI.NewsFeed.bundle";
 
 @implementation ABKUIUtils
 
 #pragma mark - Bundle Helper
 
-+ (NSBundle *)bundle:(Class)bundleClass {
-  NSString *spmBundleAt = [[[NSBundle mainBundle] bundlePath] stringByAppendingString:ABKUISPMBundlePath];
-  if ([[NSFileManager defaultManager] fileExistsAtPath:spmBundleAt]) {
-    return [NSBundle bundleWithPath:spmBundleAt];
++ (NSBundle *)bundle:(Class)bundleClass channel:(ABKChannel)channel {
+  NSBundle *bundle;
+
+  // SPM
+#if SWIFT_PACKAGE
+  bundle = SWIFTPM_MODULE_BUNDLE;
+  if (bundle != nil) {
+    return bundle;
   }
-  return  [NSBundle bundleForClass:bundleClass];
+#endif
+
+  // Cocoapods
+  switch (channel) {
+    case ABKContentCardChannel:
+      bundle = [self bundleForName:ABKUIPodCCBundleName class:bundleClass];
+      break;
+      
+    case ABKInAppMessageChannel:
+      bundle = [self bundleForName:ABKUIPodIAMBundleName class:bundleClass];
+      break;
+      
+    case ABKNewsFeedChannel:
+      bundle = [self bundleForName:ABKUIPodNFBundleName class:bundleClass];
+      break;
+      
+    default:
+      NSLog(@"Warning: Received bundle request for unsupported channel: %ld", (long)channel);
+      break;
+  }
+  
+  if (bundle != nil) {
+    return bundle;
+  }
+  
+  return [NSBundle bundleForClass:bundleClass];
+}
+
++ (nullable NSBundle *)bundleForName:(NSString *)name class:(Class)bundleClass {
+  NSURL *bundleURL = [[NSBundle bundleForClass:bundleClass].resourceURL URLByAppendingPathComponent:name];
+
+  if ([bundleURL checkResourceIsReachableAndReturnError:nil]) {
+    return [NSBundle bundleWithURL:bundleURL];
+  }
+
+  return nil;
 }
 
 #pragma mark - View Hierarchy Helpers
@@ -96,6 +139,9 @@ static NSUInteger const iPhone12ProMax = 2778.0;
   // Dynamically gets ABKInAppMessageWindow class as it is part of AppboyUI
   Class ABKInAppMessageWindow = NSClassFromString(@"ABKInAppMessageWindow");
   
+  // Holds all windows excluding any `ABKInAppMessageWindow`
+  NSMutableArray<UIWindow *> *filteredWindows = [NSMutableArray array];
+  
   for (UIWindow *window in windows) {
     // Ignores ABKInAppMessageWindow
     if (ABKInAppMessageWindow && [window isKindOfClass:[ABKInAppMessageWindow class]]) {
@@ -106,10 +152,12 @@ static NSUInteger const iPhone12ProMax = 2778.0;
     if (window.windowLevel == UIWindowLevelNormal) {
       return window;
     }
+    
+    [filteredWindows addObject:window];
   }
   
   // Fallback to first window in hierarchy
-  return windows.firstObject;
+  return filteredWindows.firstObject;
 }
 
 #pragma mark - Methods
@@ -163,19 +211,6 @@ static NSUInteger const iPhone12ProMax = 2778.0;
   return ((BOOL (*)(id, SEL))imp)(object, sel);
 }
 
-+ (Class)getSDWebImageProxyClass {
-  Class SDWebImageProxyClass = NSClassFromString(@"ABKSDWebImageProxy");
-  if (SDWebImageProxyClass == nil) {
-    NSLog(CORE_VERSION_WARNING);
-    return nil;
-  }
-  if (![SDWebImageProxyClass isSupportedSDWebImageVersion]) {
-    NSLog(@"The SDWebImage version is unsupported.");
-    return nil;
-  }
-  return SDWebImageProxyClass;
-}
-
 + (Class)getModalFeedViewControllerClass {
   return NSClassFromString(@"ABKNewsFeedViewController");
 }
@@ -186,15 +221,13 @@ static NSUInteger const iPhone12ProMax = 2778.0;
           [[UIScreen mainScreen] nativeBounds].size.height == iPhoneXSMaxHeight ||
           [[UIScreen mainScreen] nativeBounds].size.height == iPhoneXRScaledHeight ||
           [[UIScreen mainScreen] nativeBounds].size.height == iPhone12 ||
-          [[UIScreen mainScreen] nativeBounds].size.height == iPhone12ProMax);
+          [[UIScreen mainScreen] nativeBounds].size.height == iPhone12ProMax ||
+          [[UIScreen mainScreen] nativeBounds].size.height == iPhone12Mini);
 }
 
-+ (UIImage *)getImageWithName:(NSString *)name
-                         type:(NSString *)type
-               inAppboyBundle:(NSBundle *)appboyBundle {
-  NSString *imagePath = [appboyBundle pathForResource:name ofType:type];
-  UIImage *image = [UIImage imageWithContentsOfFile:imagePath];
-  return image;
++ (UIImage *)imageNamed:(NSString *)name bundle:(Class)bundleClass channel:(ABKChannel)channel {
+  NSBundle *bundle = [ABKUIUtils bundle:bundleClass channel:channel];
+  return [UIImage imageNamed:name inBundle:bundle compatibleWithTraitCollection:nil];
 }
 
 + (UIInterfaceOrientation)getInterfaceOrientation {
@@ -265,6 +298,55 @@ static NSUInteger const iPhone12ProMax = 2778.0;
   }
   
   return resp != nil;
+}
+
++ (BOOL)responderChainOf:(UIResponder *)responder hasClassPrefixedWith:(NSString *)prefix {
+  UIResponder *resp = responder;
+  
+  while (resp && ![NSStringFromClass(resp.class) hasPrefix:prefix]) {
+    resp = resp.nextResponder;
+  }
+  
+  return resp != nil;
+}
+
++ (UIFont *)preferredFontForTextStyle:(UIFontTextStyle)textStyle weight:(UIFontWeight)weight {
+  if (@available(iOS 11.0, tvOS 11.0, *)) {
+    UIFontMetrics *metrics = [UIFontMetrics metricsForTextStyle:textStyle];
+    UIFontDescriptor *descriptor = [UIFontDescriptor preferredFontDescriptorWithTextStyle:textStyle];
+    UIFont *font = [UIFont systemFontOfSize:descriptor.pointSize weight:weight];
+    return [metrics scaledFontForFont:font];
+  } else {
+    // https://apple.co/3snncd9 (Large / Default)
+    static dispatch_once_t once;
+    static NSDictionary *textStyleMap;
+    dispatch_once(&once, ^{
+      textStyleMap = @{
+        UIFontTextStyleTitle1: @(28.0),
+        UIFontTextStyleTitle2: @(22.0),
+        UIFontTextStyleTitle3: @(20.0),
+        UIFontTextStyleHeadline: @(17.0),
+        UIFontTextStyleBody: @(17.0),
+        UIFontTextStyleCallout: @(16.0),
+        UIFontTextStyleSubheadline: @(15.0),
+        UIFontTextStyleFootnote: @(13.0),
+        UIFontTextStyleCaption1: @(12.0),
+        UIFontTextStyleCaption2: @(11.0)
+      };
+    });
+
+    return [UIFont systemFontOfSize:[textStyleMap[textStyle] doubleValue]
+                             weight:weight];
+  }
+}
+
++ (void)enableAdjustsFontForContentSizeCategory:(id)label {
+  if (@available(iOS 10.0, tvOS 10.0, *)) {
+    id<UIContentSizeCategoryAdjusting> adjustableLabel = label;
+    if ([adjustableLabel respondsToSelector:@selector(setAdjustsFontForContentSizeCategory:)]) {
+      adjustableLabel.adjustsFontForContentSizeCategory = YES;
+    }
+  }
 }
 
 @end

@@ -8,6 +8,12 @@ static NSInteger const CloseButtonTag = 50;
 
 #pragma mark - Immersive In-App Message View UI Initialization
 
+- (void)viewDidLoad {
+  [super viewDidLoad];
+
+  [ABKUIUtils enableAdjustsFontForContentSizeCategory:self.inAppMessageMessageLabel];
+}
+
 - (void)viewWillAppear:(BOOL)animated {
   [super viewWillAppear:animated];
   
@@ -36,7 +42,6 @@ static NSInteger const CloseButtonTag = 50;
       self.view.superview.backgroundColor = [[UIColor blackColor] colorWithAlphaComponent:.3];
     }
   }
-  self.view.superview.accessibilityViewIsModal = YES;
   
   NSLayoutConstraint *centerYConstraint = [NSLayoutConstraint constraintWithItem:self.view
                                                                        attribute:NSLayoutAttributeCenterY
@@ -93,7 +98,9 @@ static NSInteger const CloseButtonTag = 50;
     [self.rightInAppMessageButton removeFromSuperview];
     self.leftInAppMessageButton = nil;
     self.rightInAppMessageButton = nil;
-    if ([[self getInAppMessage] isKindOfClass:[ABKInAppMessageModal class]] && [self getInAppMessage].imageStyle != ABKInAppMessageGraphic) {
+    if (([[self getInAppMessage] isKindOfClass:[ABKInAppMessageModal class]]
+         || [[self getInAppMessage] isKindOfClass:[ABKInAppMessageFull class]])
+        && [self getInAppMessage].imageStyle != ABKInAppMessageGraphic) {
       UIView *bottomView = [self bottomViewWithNoButton];
       if ([ABKUIUtils objectIsValidAndNotEmpty:bottomView]) {
         NSArray *bottomConstraints = [NSLayoutConstraint constraintsWithVisualFormat:@"V:[view]-30-|"

@@ -3,6 +3,7 @@
 #import "ABKInAppMessageView.h"
 #import "ABKInAppMessageWindowController.h"
 #import "ABKUIUtils.h"
+#import "Appboy.h"
 
 static const float InAppMessageIconLabelCornerRadius_iPhone = 10.0f;
 static const float InAppMessageIconLabelCornerRadius_iPad = 15.0f;
@@ -21,6 +22,12 @@ static NSString *const FontAwesomeName = @"FontAwesome";
 }
 
 #pragma mark - Lifecycle Methods
+
+- (void)viewDidLoad {
+  [super viewDidLoad];
+
+  [ABKUIUtils enableAdjustsFontForContentSizeCategory:self.inAppMessageMessageLabel];
+}
 
 - (void)viewWillAppear:(BOOL)animated {
   [super viewWillAppear:animated];
@@ -73,7 +80,7 @@ static NSString *const FontAwesomeName = @"FontAwesome";
     // Check if font awesome is already registered in the application. If not, register it.
     // The size can be any number here.
     if ([UIFont fontWithName:FontAwesomeName size:30] == nil) {
-      NSString *fontPath = [[ABKUIUtils bundle:[ABKInAppMessageViewController class]]
+      NSString *fontPath = [[ABKUIUtils bundle:[ABKInAppMessageViewController class] channel:ABKInAppMessageChannel]
                                      pathForResource:FontAwesomeName
                                               ofType:@"otf"];
       NSData *fontData = [NSData dataWithContentsOfFile:fontPath];
@@ -118,9 +125,8 @@ static NSString *const FontAwesomeName = @"FontAwesome";
 // we cannot find any icon from the in-app message, and won't do anything to the given image view.
 - (BOOL)applyImageToImageView:(UIImageView *)iconImageView {
   if ([ABKUIUtils objectIsValidAndNotEmpty:self.inAppMessage.imageURI]) {
-    Class SDWebImageProxyClass = [ABKUIUtils getSDWebImageProxyClass];
-    if (SDWebImageProxyClass != nil) {
-      [SDWebImageProxyClass setImageForView:iconImageView
+    if ([Appboy sharedInstance].imageDelegate) {
+      [[Appboy sharedInstance].imageDelegate setImageForView:iconImageView
                       showActivityIndicator:NO
                                     withURL:self.inAppMessage.imageURI
                            imagePlaceHolder:nil
