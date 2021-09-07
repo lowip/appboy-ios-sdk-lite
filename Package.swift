@@ -25,6 +25,7 @@ let package = Package(
       name: "AppboyKit",
       dependencies: ["SDWebImage", "AppboyKitLibrary"],
       path: "AppboyKit",
+      exclude: ["AppboyKitLibrary.xcframework"],
       resources: [
         .process("Appboy.bundle")
       ],
@@ -58,6 +59,7 @@ let package = Package(
       name: "AppboyPushStory",
       dependencies: ["AppboyPushStoryFramework"],
       path: "AppboyPushStory",
+      exclude: ["AppboyPushStory.xcframework"],
       resources: [
         .process("Resources/ABKPageView.nib")
       ]
